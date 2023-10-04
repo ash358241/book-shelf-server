@@ -12,9 +12,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(bodyParser.json());
+app.use('/uploads', express.static('uploads'));
 
 const storage = multer.diskStorage({
-    destination: './uploads',
+    destination: '../bookshelf/public/images',
     filename: (req, file, cb) => {
         cb(null, Date.now() + file.originalname)
     }
@@ -37,12 +38,18 @@ async function run() {
         const collection = db.collection('books');
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
-        app.post('/books', upload.single('image'), async (req, res) => {
+        app.post('/addBook', upload.single('image'), async (req, res) => {
             await client.connect();
             const newBook = req.body;
             newBook.image = req.file ? req.file.filename : null;
             const result = await collection.insertOne(newBook);
             res.json(result);
+        });
+
+        app.get('/books', async (req, res) => {
+            await client.connect();
+            const books = await collection.find({}).toArray();
+            res.json(books);
         });
 
         app.listen(port, () => {
