@@ -3,7 +3,7 @@ require('dotenv').config();
 const cors = require('cors');
 const multer = require('multer');
 const bodyParser = require("body-parser");
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.suylw.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`;
 
 const port = process.env.PORT || 8000;
@@ -50,6 +50,17 @@ async function run() {
             await client.connect();
             const books = await collection.find({}).toArray();
             res.json(books);
+        });
+
+        app.delete('/deleteBook/:id', async (req, res) => {
+            await client.connect();
+            const bookId = req.params.id;
+            const result = await collection.deleteOne({ _id: new ObjectId(bookId) });
+            if (result.deletedCount === 1) {
+                res.status(200).json({ message: 'Book deleted successfully' });
+            } else {
+                res.status(404).json({ message: 'Book not found' });
+            }
         });
 
         app.listen(port, () => {
