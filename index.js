@@ -52,6 +52,17 @@ async function run() {
             res.json(books);
         });
 
+        app.get('/book/:id', async (req, res) => {
+            await client.connect();
+            const bookId = req.params.id;
+            const book = await collection.findOne({ _id: new ObjectId(bookId) });
+            if (book) {
+                res.json(book);
+            } else {
+                res.status(404).json({ message: 'Book not found' });
+            }
+        });
+
         app.delete('/deleteBook/:id', async (req, res) => {
             await client.connect();
             const bookId = req.params.id;
