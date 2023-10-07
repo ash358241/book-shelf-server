@@ -46,6 +46,35 @@ async function run() {
             res.json(result);
         });
 
+        app.post('/comment/:id', async (req, res) => {
+            await client.connect();
+
+            const bookId = req.params.id;
+            const feedbackData = req.body;
+
+            const book = await collection.findOne({ _id: new ObjectId(bookId) });
+            if (!book) {
+                res.status(404).json({ message: 'Book not found' });
+                return;
+            }
+
+            if (!book.feedback) {
+                book.feedback = [];
+            }
+            book.feedback.push(feedbackData);
+
+            const result = await collection.updateOne(
+                { _id: new ObjectId(bookId) },
+                { $set: { feedback: book.feedback } }
+            );
+
+            if (result.modifiedCount === 1) {
+                res.status(200).json({ message: 'Feedback added successfully' });
+            } else {
+                res.status(500).json({ message: 'Failed to add feedback' });
+            }
+        })
+
         app.get('/books', async (req, res) => {
             await client.connect();
             const books = await collection.find({}).toArray();
