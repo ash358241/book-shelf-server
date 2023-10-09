@@ -92,6 +92,37 @@ async function run() {
             }
         });
 
+        app.put('/editBook/:id', upload.single('image'), async (req, res) => {
+            try {
+                await client.connect();
+                const bookId = req.params.id;
+                const updatedBookData = req.body;
+                updatedBookData.image = req.file ? req.file.filename : null;
+
+                const existingBook = await collection.findOne({ _id: new ObjectId(bookId) });
+                if (!existingBook) {
+                    return res.status(404).json({ message: 'Book not found' });
+                }
+
+                const result = await collection.updateOne(
+                    { _id: new ObjectId(bookId) },
+                    { $set: updatedBookData }
+                );
+
+                if (result.modifiedCount === 1) {
+                    res.status(200).json({ message: 'Book updated successfully' });
+                } else {
+                    res.status(500).json({ message: 'Failed to update book' });
+                }
+            } catch (error) {
+                console.error('Error editing book:', error);
+                res.status(500).json({ message: 'Internal server error' });
+            } finally {
+                await client.close();
+            }
+        });
+
+
         app.delete('/deleteBook/:id', async (req, res) => {
             await client.connect();
             const bookId = req.params.id;
